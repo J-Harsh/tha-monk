@@ -3,7 +3,15 @@
 @theme {
     --color-primary: #008060;
     --color-secondary: #00000066;
+    --color-tertiary: #00000033;
     --font-sans:
         ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
+@layer base {
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }

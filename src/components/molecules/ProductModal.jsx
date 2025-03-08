@@ -1,88 +1,82 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "../atoms/Modal";
 import Container from "../atoms/Container";
 import Button from "../atoms/Button/Button";
 import Flex from "../atoms/Flex";
 import Typography from "../atoms/Typography";
+import usePaginatedSearchQuery from "../../hooks/usePaginatedSearchQuery";
+import useGlobalStore from "../../store/useGlobalStore";
 
-const ProductModal = ({
-  isOpen,
-  onClose,
-  onAdd,
-  initialSelectedProducts = [],
-  products = [],
-  onSearch,
-  isLoading = false,
-}) => {
-  const [selectedProducts, setSelectedProducts] = useState(
-    initialSelectedProducts
+const ProductModal = ({ isOpen }) => {
+  const { toggleModal, addToSelectedProducts } = useGlobalStore(
+    (state) => state
+  );
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  const { data, isLoading, isError, error } = usePaginatedSearchQuery(
+    { page, limit, search: searchTerm },
+    { enabled: isOpen }
   );
 
-  const toggleProductSelection = (productId) => {
-    setSelectedProducts((prev) => {
-      if (prev.includes(productId)) {
-        return prev.filter((id) => id !== productId);
-      } else {
-        return [...prev, productId];
-      }
-    });
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  const products = data?.products || [];
+
+  const handleSearch = (value) => {
+    setSearchTerm(value);
   };
 
   const handleAdd = () => {
-    onAdd(selectedProducts);
-    onClose();
+    addToSelectedProducts(selectedProducts);
+    setSelectedProducts([]);
+    toggleModal();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <Modal.Title>Select Products</Modal.Title>
+    <Modal
+      isOpen={isOpen}
+      onClose={() => {
+        setSelectedProducts([]);
+        toggleModal();
+      }}
+    >
+      <Modal.Title>Add Products</Modal.Title>
 
-      <Modal.Search onSearch={onSearch} placeholder="Search products..." />
+      <Modal.Search onSearch={handleSearch} placeholder="Search products..." />
 
       <Modal.Body>
-        <Container className="divide-y divide-gray-200">
+        <Container className="divide-y divide-secondary">
           {isLoading ? (
             <Flex center className="py-4">
               <Typography className="text-gray-500">
-                Loading products...
+                Built a custom api to host it on render , might take some time.
+              </Typography>
+            </Flex>
+          ) : isError ? (
+            <Flex center className="py-4">
+              <Typography className="text-red-500">
+                Error loading products: {error.message}
               </Typography>
             </Flex>
           ) : products.length > 0 ? (
-            products.map((product) => (
-              <Container
-                key={product.id}
-                className="py-3 px-2 hover:bg-gray-50"
-              >
-                <Flex>
-                  <input
-                    type="checkbox"
-                    id={`product-${product.id}`}
-                    checked={selectedProducts.includes(product.id)}
-                    onChange={() => toggleProductSelection(product.id)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor={`product-${product.id}`}
-                    className="ml-3 block w-full"
-                  >
-                    <Flex direction="col" className="w-full">
-                      <Flex className="w-full justify-between">
-                        <Typography weight="medium">{product.name}</Typography>
-                        <Typography className="text-gray-500">
-                          ${product.price.toFixed(2)}
-                        </Typography>
-                      </Flex>
-                      <Typography size="sm" className="text-gray-500">
-                        {product.category}
-                      </Typography>
-                    </Flex>
-                  </label>
-                </Flex>
-              </Container>
-            ))
+            <>
+              {products.map((product) => (
+                <ProductSection
+                  key={product.id}
+                  data={product}
+                  selectedProducts={selectedProducts}
+                  setSelectedProducts={setSelectedProducts}
+                />
+              ))}
+            </>
           ) : (
             <Flex center className="py-4">
-              <Typography className="text-gray-500">
+              <Typography className="text-tertiary">
                 No products found. Try a different search term.
               </Typography>
             </Flex>
@@ -92,19 +86,26 @@ const ProductModal = ({
 
       <Modal.Footer>
         <Flex className="w-full justify-between items-center">
-          <Typography size="sm" weight="medium">
+          <Typography weight="normal">
             {selectedProducts.length} products selected
           </Typography>
           <Flex>
-            <Button variant="secondary" onClick={onClose} className="mr-2">
-              Cancel
+            <Button
+              variant="tertiary"
+              onClick={() => {
+                setSelectedProducts([]);
+                toggleModal();
+              }}
+              className="mr-2"
+            >
+              <Typography weight="semibold">Cancel</Typography>
             </Button>
             <Button
               variant="primary"
               onClick={handleAdd}
               disabled={selectedProducts.length === 0}
             >
-              Add
+              <Typography weight="semibold">Add</Typography>
             </Button>
           </Flex>
         </Flex>
@@ -114,3 +115,121 @@ const ProductModal = ({
 };
 
 export default ProductModal;
+
+const ProductSection = ({ data, selectedProducts, setSelectedProducts }) => {
+  const isParentSelected = selectedProducts.some(
+    (product) => product.id === data.id
+  );
+
+  const selectedVariants =
+    selectedProducts.find((product) => product.id === data.id)?.variants || [];
+
+  const handleParent = () => {
+    if (isParentSelected) {
+      setSelectedProducts((prev) =>
+        prev.filter((product) => product.id !== data.id)
+      );
+    } else {
+      setSelectedProducts((prev) => {
+        return [...prev, { ...data, variants: [...data.variants] }];
+      });
+    }
+  };
+
+  const handleAddVariant = (variant) => {
+    const isVariantSelected = selectedVariants.some(
+      (item) => item.id === variant.id
+    );
+
+    if (isParentSelected) {
+      if (isVariantSelected) {
+        setSelectedProducts((prev) => {
+          const updatedProducts = prev.map((product) => {
+            if (product.id === data.id) {
+              const updatedVariants = product.variants.filter(
+                (item) => item.id !== variant.id
+              );
+
+              if (updatedVariants.length === 0) {
+                return null;
+              }
+
+              return {
+                ...product,
+                variants: updatedVariants,
+              };
+            }
+            return product;
+          });
+
+          return updatedProducts.filter(Boolean);
+        });
+      } else {
+        setSelectedProducts((prev) =>
+          prev.map((product) => {
+            if (product.id === data.id) {
+              return {
+                ...product,
+                variants: [...product.variants, variant],
+              };
+            }
+            return product;
+          })
+        );
+      }
+    } else {
+      setSelectedProducts((prev) => {
+        return [...prev, { ...data, variants: [variant] }];
+      });
+    }
+  };
+
+  return (
+    <Container>
+      <Flex className="gap-6 py-2" verticalCenter>
+        <input
+          checked={isParentSelected}
+          onChange={handleParent}
+          className="scale-180 ml-4 cursor-pointer accent-primary"
+          type="checkbox"
+        />
+        <img
+          src={data.image.src}
+          alt="product"
+          className="rounded-md size-12"
+        />
+        <Typography size="base" weight="normal">
+          {data.title}
+        </Typography>
+      </Flex>
+      <Container>
+        {data?.variants?.map((item) => {
+          const isVariantSelected = selectedVariants.some(
+            (variant) => variant.id === item.id
+          );
+
+          return (
+            <Flex
+              verticalCenter
+              key={item.id}
+              className="border-t border-tertiary justify-between py-2 px-4"
+            >
+              <Flex verticalCenter className="ml-10 gap-2">
+                <input
+                  checked={isVariantSelected}
+                  onChange={() => {
+                    handleAddVariant(item);
+                  }}
+                  type="checkbox"
+                  className="accent-primary size-4 cursor-pointer"
+                />
+                <Typography>{item.title}</Typography>
+              </Flex>
+              <Typography>${item.price}</Typography>
+            </Flex>
+          );
+        })}
+      </Container>
+    </Container>
+  );
+};
