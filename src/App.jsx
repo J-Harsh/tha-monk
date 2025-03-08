@@ -1,5 +1,7 @@
+import AddProducts from "./components/organisms/AddProducts";
+
 function App() {
-  return <div>hi</div>;
+  return <AddProducts />;
 }
 
 export default App;

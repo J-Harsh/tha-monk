@@ -1,0 +1,40 @@
+
+.btn {
+    @apply px-4 py-2 rounded font-sans transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  
+  .btn:focus {
+    @apply focus:ring-[var(--color-primary)];
+  }
+  
+  
+  .btn-primary {
+    @apply bg-[var(--color-primary)] text-white border-0;
+  }
+  
+  .btn-primary:hover {
+    @apply bg-opacity-90;
+  }
+  
+  
+  .btn-secondary {
+    @apply bg-white text-[var(--color-primary)] border-2 border-[var(--color-primary)];
+  }
+  
+  .btn-secondary:hover {
+    @apply var(--color-secondary);
+  }
+  
+  
+  .btn-tertiary {
+    @apply bg-white text-[#00000066] border-2 border-[#00000066];
+  }
+  
+  .btn-tertiary:hover {
+    @apply var(--color-secondary);
+  }
+  
+  
+  .btn-disabled {
+    @apply opacity-50 cursor-not-allowed pointer-events-none;
+  }
