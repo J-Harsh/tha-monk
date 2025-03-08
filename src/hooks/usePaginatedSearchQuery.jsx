@@ -1,16 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
-function usePaginatedSearchQuery({ page, limit, search }, options = {}) {
-  const queryKey = ["products", { page, limit, search }];
-
-  return useQuery({
-    queryKey,
-    queryFn: async () => {
-      // Create URL with URLSearchParams
+function usePaginatedSearchQuery({ limit, search }, options = {}) {
+  return useInfiniteQuery({
+    queryKey: ["products", { limit, search }],
+    queryFn: async ({ pageParam = 1 }) => {
       const baseUrl = "https://tha-monk-sample-be.onrender.com/products";
       const params = new URLSearchParams();
 
-      params.append("page", String(page));
+      params.append("page", String(pageParam));
       params.append("limit", String(limit));
       if (search) {
         params.append("search", search);
@@ -18,12 +15,24 @@ function usePaginatedSearchQuery({ page, limit, search }, options = {}) {
 
       const url = `${baseUrl}?${params.toString()}`;
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        throw error;
       }
-      return response.json();
     },
+    getNextPageParam: (lastPage) => {
+      const { page, pages } = lastPage.pagination;
+      return page < pages ? page + 1 : false;
+    },
+
+    keepPreviousData: true,
     ...options,
   });
 }

@@ -14,6 +14,7 @@ const ProductSelect = ({ data }) => {
   const { toggleModal } = useGlobalStore((state) => state);
 
   return (
+    
     <Flex verticalCenter key={data.id} className="my-4 gap-4 ">
       <img src={IconDD} width="7px" height="14px" alt="d&d icon" />
       1.

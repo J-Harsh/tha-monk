@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import debounce from "lodash.debounce";
 import Modal from "../atoms/Modal";
 import Container from "../atoms/Container";
 import Button from "../atoms/Button/Button";
@@ -12,36 +13,84 @@ const ProductModal = ({ isOpen }) => {
     (state) => state
   );
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [page, setPage] = useState(1);
-  const limit = 10;
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
-  const { data, isLoading, isError, error } = usePaginatedSearchQuery(
-    { page, limit, search: searchTerm },
+  const debouncedSetSearch = useCallback(
+    debounce((value) => {
+      setDebouncedSearchTerm(value);
+    }, 800),
+    []
+  );
+
+  const limit = 10;
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePaginatedSearchQuery(
+    { limit, search: debouncedSearchTerm },
     { enabled: isOpen }
   );
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm]);
-
-  const products = data?.products || [];
+  const products = data?.pages?.flatMap((page) => page.products) || [];
 
   const handleSearch = (value) => {
-    setSearchTerm(value);
+    debouncedSetSearch(value);
   };
 
   const handleAdd = () => {
     addToSelectedProducts(selectedProducts);
     setSelectedProducts([]);
+    setDebouncedSearchTerm("");
     toggleModal();
   };
+
+  const divRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            console.log("The div is in view.");
+          } else {
+            console.log("The div is out of view.");
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    if (divRef.current) {
+      observer.observe(divRef.current);
+    }
+
+    return () => {
+      if (divRef.current) {
+        observer.unobserve(divRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      refetch();
+    }
+  }, [debouncedSearchTerm, refetch, isOpen]);
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={() => {
         setSelectedProducts([]);
+        setDebouncedSearchTerm("");
         toggleModal();
       }}
     >
@@ -51,11 +100,21 @@ const ProductModal = ({ isOpen }) => {
 
       <Modal.Body>
         <Container className="divide-y divide-secondary">
-          {isLoading ? (
+          {isLoading && !isFetchingNextPage ? (
             <Flex center className="py-4">
               <Typography className="text-gray-500">
                 Built a custom api to host it on render , might take some time.
               </Typography>
+              <br />
+              <center>
+                <a
+                  href="https://github.com/J-Harsh/tha-monk-sample-be"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Link to backend
+                </a>
+              </center>
             </Flex>
           ) : isError ? (
             <Flex center className="py-4">
@@ -73,6 +132,13 @@ const ProductModal = ({ isOpen }) => {
                   setSelectedProducts={setSelectedProducts}
                 />
               ))}
+              <Container
+                ref={divRef}
+                style={{
+                  height: "200px",
+                  backgroundColor: "#f0f0f0",
+                }}
+              ></Container>
             </>
           ) : (
             <Flex center className="py-4">
@@ -94,6 +160,7 @@ const ProductModal = ({ isOpen }) => {
               variant="tertiary"
               onClick={() => {
                 setSelectedProducts([]);
+                setDebouncedSearchTerm("");
                 toggleModal();
               }}
               className="mr-2"
