@@ -28,10 +28,9 @@ const ProductModal = ({ isOpen }) => {
     isLoading,
     isError,
     error,
-    fetchNextPage,
-    hasNextPage,
     isFetchingNextPage,
-    refetch,
+    hasNextPage,
+    fetchNextPage,
   } = usePaginatedSearchQuery(
     { limit, search: debouncedSearchTerm },
     { enabled: isOpen }
@@ -50,40 +49,35 @@ const ProductModal = ({ isOpen }) => {
     toggleModal();
   };
 
-  const divRef = useRef(null);
+  const observerRef = useRef(null);
+  const loadMoreRef = useRef(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    if (!isOpen) return;
+
+    observerRef.current = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            console.log("The div is in view.");
-          } else {
-            console.log("The div is out of view.");
-          }
-        });
+        const [entry] = entries;
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
       },
-      {
-        threshold: 0.1,
-      }
+      { threshold: 0.5 }
     );
 
-    if (divRef.current) {
-      observer.observe(divRef.current);
+    const currentObserver = observerRef.current;
+    const currentLoadMoreRef = loadMoreRef.current;
+
+    if (currentLoadMoreRef) {
+      currentObserver.observe(currentLoadMoreRef);
     }
 
     return () => {
-      if (divRef.current) {
-        observer.unobserve(divRef.current);
+      if (currentLoadMoreRef && currentObserver) {
+        currentObserver.unobserve(currentLoadMoreRef);
       }
     };
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      refetch();
-    }
-  }, [debouncedSearchTerm, refetch, isOpen]);
+  }, [isOpen, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <Modal
@@ -132,13 +126,23 @@ const ProductModal = ({ isOpen }) => {
                   setSelectedProducts={setSelectedProducts}
                 />
               ))}
-              <Container
-                ref={divRef}
-                style={{
-                  height: "200px",
-                  backgroundColor: "#f0f0f0",
-                }}
-              ></Container>
+              <div ref={loadMoreRef} className="py-4">
+                {isFetchingNextPage ? (
+                  <Flex center>
+                    <Typography className="text-secondary">
+                      Loading more products...
+                    </Typography>
+                  </Flex>
+                ) : hasNextPage ? (
+                  <div style={{ height: "20px" }} /> // Invisible element for observer
+                ) : products.length > 0 ? (
+                  <Flex center>
+                    <Typography className="text-secondary">
+                      No more products to load
+                    </Typography>
+                  </Flex>
+                ) : null}
+              </div>
             </>
           ) : (
             <Flex center className="py-4">

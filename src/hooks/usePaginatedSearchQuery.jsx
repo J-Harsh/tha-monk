@@ -29,7 +29,7 @@ function usePaginatedSearchQuery({ limit, search }, options = {}) {
     },
     getNextPageParam: (lastPage) => {
       const { page, pages } = lastPage.pagination;
-      return page < pages ? page + 1 : false;
+      return page < pages ? page + 1 : undefined;
     },
 
     keepPreviousData: true,

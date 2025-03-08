@@ -7,7 +7,6 @@ import Container from "./Container";
 import Typography from "./Typography";
 
 const Modal = ({ isOpen, children }) => {
-  const { toggleModal } = useGlobalStore((state) => state);
   const dialogRef = useRef(null);
 
   useEffect(() => {
