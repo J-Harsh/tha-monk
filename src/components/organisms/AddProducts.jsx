@@ -5,7 +5,6 @@ import Flex from "../atoms/Flex";
 import useGlobalStore from "../../store/useGlobalStore";
 import ProductSelect from "../molecules/ProductSelect";
 import Button from "../atoms/Button/Button";
-import ProductModal from "../molecules/ProductModal";
 import {
   closestCenter,
   DndContext,
@@ -23,11 +22,11 @@ const AddProducts = () => {
   const { displayProducts, addDummyProduct, modalOpen, updateProduct } =
     useGlobalStore((state) => state);
 
+  const sensors = useSensors(useSensor(PointerSensor, {}));
+
   const handleAddProduct = () => {
     addDummyProduct();
   };
-
-  const sensors = useSensors(useSensor(PointerSensor, {}));
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -82,7 +81,6 @@ const AddProducts = () => {
           </Container>
         </Container>
       </Flex>
-      
     </>
   );
 };

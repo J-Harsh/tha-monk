@@ -9,7 +9,7 @@ import usePaginatedSearchQuery from "../../hooks/usePaginatedSearchQuery";
 import useGlobalStore from "../../store/useGlobalStore";
 
 const ProductModal = ({ id, isOpen }) => {
-  const limit = 10;
+  const pageLimit = 10;
   const { toggleModal, addToSelectedProducts, removeProduct } = useGlobalStore(
     (state) => state
   );
@@ -17,12 +17,12 @@ const ProductModal = ({ id, isOpen }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
-  const observerRef = useRef(null);
+  const intersectionObserver = useRef(null);
   const loadMoreRef = useRef(null);
 
   const debouncedSetSearch = useCallback(
-    debounce((value) => {
-      setDebouncedSearchTerm(value);
+    debounce((searchValue) => {
+      setDebouncedSearchTerm(searchValue);
     }, 800),
     []
   );
@@ -36,14 +36,14 @@ const ProductModal = ({ id, isOpen }) => {
     hasNextPage,
     fetchNextPage,
   } = usePaginatedSearchQuery(
-    { limit, search: debouncedSearchTerm },
+    { limit: pageLimit, search: debouncedSearchTerm },
     { enabled: isOpen }
   );
 
-  const products = data?.pages?.flatMap((page) => page.products) || [];
+  const productList = data?.pages?.flatMap((page) => page.products) || [];
 
-  const handleSearch = (value) => {
-    debouncedSetSearch(value);
+  const handleSearch = (searchValue) => {
+    debouncedSetSearch(searchValue);
   };
 
   const handleAdd = () => {
@@ -54,10 +54,16 @@ const ProductModal = ({ id, isOpen }) => {
     toggleModal();
   };
 
+  const handleCancel = () => {
+    setSelectedProducts([]);
+    setDebouncedSearchTerm("");
+    toggleModal();
+  };
+
   useEffect(() => {
     if (!isOpen) return;
 
-    observerRef.current = new IntersectionObserver(
+    intersectionObserver.current = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
         if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
@@ -67,7 +73,7 @@ const ProductModal = ({ id, isOpen }) => {
       { threshold: 0.5 }
     );
 
-    const currentObserver = observerRef.current;
+    const currentObserver = intersectionObserver.current;
     const currentLoadMoreRef = loadMoreRef.current;
 
     if (currentLoadMoreRef) {
@@ -82,14 +88,7 @@ const ProductModal = ({ id, isOpen }) => {
   }, [isOpen, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={() => {
-        setSelectedProducts([]);
-        setDebouncedSearchTerm("");
-        toggleModal();
-      }}
-    >
+    <Modal isOpen={isOpen} onClose={handleCancel}>
       <Modal.Title>Add Products</Modal.Title>
 
       <Modal.Search onSearch={handleSearch} placeholder="Search products..." />
@@ -118,9 +117,9 @@ const ProductModal = ({ id, isOpen }) => {
                 Error loading products: {error.message}
               </Typography>
             </Flex>
-          ) : products.length > 0 ? (
+          ) : productList.length > 0 ? (
             <>
-              {products.map((product) => (
+              {productList.map((product) => (
                 <ProductSection
                   key={product.id}
                   data={product}
@@ -128,7 +127,7 @@ const ProductModal = ({ id, isOpen }) => {
                   setSelectedProducts={setSelectedProducts}
                 />
               ))}
-              <div ref={loadMoreRef} className="py-4">
+              <Container ref={loadMoreRef} className="py-4">
                 {isFetchingNextPage ? (
                   <Flex center>
                     <Typography className="text-secondary">
@@ -136,15 +135,15 @@ const ProductModal = ({ id, isOpen }) => {
                     </Typography>
                   </Flex>
                 ) : hasNextPage ? (
-                  <div style={{ height: "20px" }} /> // Invisible element for observer
-                ) : products.length > 0 ? (
+                  <Container className="h-20 w-full" />
+                ) : productList.length > 0 ? (
                   <Flex center>
                     <Typography className="text-secondary">
                       No more products to load
                     </Typography>
                   </Flex>
                 ) : null}
-              </div>
+              </Container>
             </>
           ) : (
             <Flex center className="py-4">
@@ -162,15 +161,7 @@ const ProductModal = ({ id, isOpen }) => {
             {selectedProducts.length} products selected
           </Typography>
           <Flex>
-            <Button
-              variant="tertiary"
-              onClick={() => {
-                setSelectedProducts([]);
-                setDebouncedSearchTerm("");
-                toggleModal();
-              }}
-              className="mr-2"
-            >
+            <Button variant="tertiary" onClick={handleCancel} className="mr-2">
               <Typography weight="semibold">Cancel</Typography>
             </Button>
             <Button
@@ -190,15 +181,15 @@ const ProductModal = ({ id, isOpen }) => {
 export default ProductModal;
 
 const ProductSection = ({ data, selectedProducts, setSelectedProducts }) => {
-  const isParentSelected = selectedProducts.some(
+  const isProductSelected = selectedProducts.some(
     (product) => product.id === data.id
   );
 
   const selectedVariants =
     selectedProducts.find((product) => product.id === data.id)?.variants || [];
 
-  const handleParent = () => {
-    if (isParentSelected) {
+  const handleProductSelection = () => {
+    if (isProductSelected) {
       setSelectedProducts((prev) =>
         prev.filter((product) => product.id !== data.id)
       );
@@ -209,12 +200,12 @@ const ProductSection = ({ data, selectedProducts, setSelectedProducts }) => {
     }
   };
 
-  const handleAddVariant = (variant) => {
+  const handleVariantSelection = (variant) => {
     const isVariantSelected = selectedVariants.some(
       (item) => item.id === variant.id
     );
 
-    if (isParentSelected) {
+    if (isProductSelected) {
       if (isVariantSelected) {
         setSelectedProducts((prev) => {
           const updatedProducts = prev.map((product) => {
@@ -261,8 +252,8 @@ const ProductSection = ({ data, selectedProducts, setSelectedProducts }) => {
     <Container>
       <Flex className="gap-6 py-2" verticalCenter>
         <input
-          checked={isParentSelected}
-          onChange={handleParent}
+          checked={isProductSelected}
+          onChange={handleProductSelection}
           className="scale-180 ml-4 cursor-pointer accent-primary"
           type="checkbox"
         />
@@ -276,29 +267,29 @@ const ProductSection = ({ data, selectedProducts, setSelectedProducts }) => {
         </Typography>
       </Flex>
       <Container>
-        {data?.variants?.map((item) => {
+        {data?.variants?.map((variant) => {
           const isVariantSelected = selectedVariants.some(
-            (variant) => variant.id === item.id
+            (item) => item.id === variant.id
           );
 
           return (
             <Flex
               verticalCenter
-              key={item.id}
+              key={variant.id}
               className="border-t border-tertiary justify-between py-2 px-4"
             >
               <Flex verticalCenter className="ml-10 gap-2">
                 <input
                   checked={isVariantSelected}
                   onChange={() => {
-                    handleAddVariant(item);
+                    handleVariantSelection(variant);
                   }}
                   type="checkbox"
                   className="accent-primary size-4 cursor-pointer"
                 />
-                <Typography>{item.title}</Typography>
+                <Typography>{variant.title}</Typography>
               </Flex>
-              <Typography>${item.price}</Typography>
+              <Typography>${variant.price}</Typography>
             </Flex>
           );
         })}

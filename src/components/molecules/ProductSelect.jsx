@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import IconClose from "../../assets/icons/Icon_Close.svg";
-import IconDD from "../../assets/icons/Icon_D&D.svg";
+import IconDragDrop from "../../assets/icons/Icon_D&D.svg";
 import EditIcon from "../../assets/icons/Icon_Draw.svg";
 import Container from "../atoms/Container";
 import Flex from "../atoms/Flex";
@@ -41,17 +41,16 @@ const SortableVariantItem = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <Container ref={setNodeRef} style={style}>
       <Flex verticalCenter key={item.id} className="m-8 mt-4 mb-2 gap-4">
-        {/* Drag handle - ONLY this element gets drag abilities */}
-        <div
+        <Container
           className="cursor-move"
           data-nodename="drag-handle"
           {...listeners}
           {...attributes}
         >
-          <img src={IconDD} width="7px" height="14px" alt="drag handle" />
-        </div>
+          <img src={IconDragDrop} width="7px" height="14px" alt="drag handle" />
+        </Container>
         {index + 1}.
         <Flex
           verticalCenter
@@ -95,7 +94,7 @@ const SortableVariantItem = ({
           </Button>
         )}
       </Flex>
-    </div>
+    </Container>
   );
 };
 
@@ -108,37 +107,37 @@ const ProductSelect = ({ data, index }) => {
     modalOpen,
   } = useGlobalStore((state) => state);
   const [isExpanded, setIsExpanded] = useState(false);
-  const variants = data?.variants || [];
-  const sensors = useSensors(useSensor(PointerSensor, {}));
+  const variantList = data?.variants || [];
+  const dndSensors = useSensors(useSensor(PointerSensor, {}));
 
-  const expandVariants = () => {
+  const toggleExpansion = () => {
     setIsExpanded(!isExpanded);
   };
 
-  const handleProductDiscountChange = (value) => {
-    updateProductDiscount(data.id, value, data.discountType);
+  const handleProductDiscountChange = (newValue) => {
+    updateProductDiscount(data.id, newValue, data.discountType);
   };
 
-  const handleProductDiscountTypeChange = (e) => {
-    const newType = e.target.value;
+  const handleProductDiscountTypeChange = (evt) => {
+    const newType = evt.target.value;
     updateProductDiscount(data.id, data.discount, newType);
   };
 
-  const handleVariantDiscountChange = (variantId, value) => {
-    updateVariantDiscount(data.id, variantId, value, data.discountType);
+  const handleVariantDiscountChange = (variantId, newValue) => {
+    updateVariantDiscount(data.id, variantId, newValue, data.discountType);
   };
 
-  const handleVariantDiscountTypeChange = (variantId, e) => {
-    const newType = e.target.value;
+  const handleVariantDiscountTypeChange = (variantId, evt) => {
+    const newType = evt.target.value;
     updateVariantDiscount(data.id, variantId, data.discount, newType);
   };
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    const oldIndex = variants.findIndex((item) => item.id === active.id);
-    const newIndex = variants.findIndex((item) => item.id === over.id);
-    const newArray = arrayMove(variants, oldIndex, newIndex);
-    updateVariant(data.id, newArray);
+    const oldIndex = variantList.findIndex((item) => item.id === active.id);
+    const newIndex = variantList.findIndex((item) => item.id === over.id);
+    const reordered = arrayMove(variantList, oldIndex, newIndex);
+    updateVariant(data.id, reordered);
   };
 
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -154,14 +153,14 @@ const ProductSelect = ({ data, index }) => {
   return (
     <Container ref={setNodeRef} style={style} className="my-4">
       <Flex verticalCenter key={data.id} className="mt-4 mb-2 gap-4">
-        <div
+        <Container
           className="cursor-move"
           data-nodename="drag-handle"
           {...listeners}
           {...attributes}
         >
-          <img src={IconDD} width="7px" height="14px" alt="drag handle" />
-        </div>
+          <img src={IconDragDrop} width="7px" height="14px" alt="drag handle" />
+        </Container>
         {index + 1}.
         <Flex
           onClick={() => toggleModal()}
@@ -206,12 +205,12 @@ const ProductSelect = ({ data, index }) => {
           </Button>
         )}
       </Flex>
-      {variants?.length > 0 ? (
+      {variantList?.length > 0 ? (
         <Flex direction="col">
           <Typography
-            onClick={() => expandVariants()}
+            onClick={() => toggleExpansion()}
             size="sm"
-            className="text-blue-400 underline cursor-pointer"
+            className="text-blue-400 underline cursor-pointer w-max"
             weight="semibold"
           >
             Variants {isExpanded ? "⬆️" : "⬇️"}
@@ -219,21 +218,21 @@ const ProductSelect = ({ data, index }) => {
           {isExpanded && (
             <Container>
               <DndContext
-                sensors={sensors}
+                sensors={dndSensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={variants?.map((item) => {
+                  items={variantList?.map((item) => {
                     return item.id;
                   })}
                   strategy={verticalListSortingStrategy}
                 >
-                  {variants?.map((item, index) => (
+                  {variantList?.map((variant, idx) => (
                     <SortableVariantItem
-                      key={item.id}
-                      index={index}
-                      item={item}
+                      key={variant.id}
+                      index={idx}
+                      item={variant}
                       handleVariantDiscountChange={handleVariantDiscountChange}
                       handleVariantDiscountTypeChange={
                         handleVariantDiscountTypeChange
