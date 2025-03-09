@@ -1,26 +1,36 @@
 # tha-monk
 
-## Libraries Used and Reasoning: Concise Reasons
+## Libraries Used and Reasoning
 
-This document outlines the libraries chosen for this project, focusing on the primary reasoning behind each selection, keeping explanations concise.
+**Core Functionality & User Experience:**
 
-### dnd-kit
-**Reasoning:** To add drag and drop functionality and easily manage sortable lists.
+* **dnd-kit:**
+    * **Purpose:** Enables intuitive drag-and-drop interactions, particularly for reordering lists.
+    * **Reasoning:** Simplifies the implementation of sortable lists, ensuring a smooth and user-friendly experience for managing ordered data.
+* **tailwind-css:**
+    * **Purpose:** Provides a utility-first CSS framework for rapid and consistent styling.
+    * **Reasoning:** Speeds up development, facilitates custom component creation, and promotes maintainable theming. Personal preference due to rapid UI development.
 
-### tailwind-css
-**Reasoning:** For rapid styling, consistent theming, and speed of development.
+**Data Management & API Interactions:**
 
-### tanstack/react-query
-**Reasoning:** For comprehensive data fetching and simplified server state management, eliminating manual state handling.
+* **@tanstack/react-query:**
+    * **Purpose:** Manages server-state data fetching, caching, and updates.
+    * **Reasoning:** Streamlines data fetching by handling loading, error, and pagination states. The `useInfiniteQuery` hook simplifies infinite scroll implementations, reducing boilerplate code.
+* **zustand:**
+    * **Purpose:** A small, fast, and scalable bearbones state-management solution.
+    * **Reasoning:** Simplifies local state management, preventing prop drilling and making state updates more manageable. It's a lightweight alternative to Redux Toolkit, offering flexibility and ease of use.
 
-### clsx and tailwind merge
-**Reasoning:** To create a `cn` utility for conditional classes and resolve Tailwind CSS class conflicts, enhancing component flexibility.
+**Utility & Optimization:**
 
-### lodash.debounce and throttle
-**Reasoning:** To implement debounce and throttling for performance optimization in modals, leveraging well-tested utilities.
+* **clsx & tailwind-merge:**
+    * **Purpose:** Create a `cn` (class name) utility function.
+    * **Reasoning:** `clsx` enables conditional class application, while `tailwind-merge` resolves conflicting Tailwind CSS class names, ensuring predictable styling and scalability of the component library.
+* **lodash.debounce & lodash.throttle:**
+    * **Purpose:** Control the frequency of function execution, particularly within modal interactions.
+    * **Reasoning:** Improves performance by preventing excessive function calls, especially during user input or rapid events. While these functions could be implemented manually, using Lodash provides a reliable and efficient solution.
 
-### zustand
-**Reasoning:** For lightweight and flexible local state management, preventing prop drilling with minimal boilerplate.
+**Build Tooling:**
 
-### vite
-**Reasoning:** As the modern, fast, and officially recommended build tool for React applications.
+* **vite:**
+    * **Purpose:** A fast and modern build tool for React applications.
+    * **Reasoning:** Offers rapid development with hot module replacement and efficient bundling. It's recommended by the React documentation, ensuring compatibility and future-proofing.
