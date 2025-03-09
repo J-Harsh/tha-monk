@@ -36,7 +36,7 @@ const ProductModal = ({ id, isOpen }) => {
     hasNextPage,
     fetchNextPage,
   } = usePaginatedSearchQuery(
-    { limit: pageLimit, search: debouncedSearchTerm, throttleTime: 500 },
+    { limit: pageLimit, search: debouncedSearchTerm, throttleTime: 600 },
     { enabled: isOpen }
   );
 
