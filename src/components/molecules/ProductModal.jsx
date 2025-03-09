@@ -8,12 +8,17 @@ import Typography from "../atoms/Typography";
 import usePaginatedSearchQuery from "../../hooks/usePaginatedSearchQuery";
 import useGlobalStore from "../../store/useGlobalStore";
 
-const ProductModal = ({ isOpen }) => {
-  const { toggleModal, addToSelectedProducts } = useGlobalStore(
+const ProductModal = ({ id, isOpen }) => {
+  const limit = 10;
+  const { toggleModal, addToSelectedProducts, removeProduct } = useGlobalStore(
     (state) => state
   );
+
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  const observerRef = useRef(null);
+  const loadMoreRef = useRef(null);
 
   const debouncedSetSearch = useCallback(
     debounce((value) => {
@@ -22,7 +27,6 @@ const ProductModal = ({ isOpen }) => {
     []
   );
 
-  const limit = 10;
   const {
     data,
     isLoading,
@@ -43,14 +47,12 @@ const ProductModal = ({ isOpen }) => {
   };
 
   const handleAdd = () => {
+    removeProduct(id);
     addToSelectedProducts(selectedProducts);
     setSelectedProducts([]);
     setDebouncedSearchTerm("");
     toggleModal();
   };
-
-  const observerRef = useRef(null);
-  const loadMoreRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen) return;

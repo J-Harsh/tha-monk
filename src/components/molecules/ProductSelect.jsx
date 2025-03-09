@@ -22,6 +22,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import ProductModal from "./ProductModal";
 
 const SortableVariantItem = ({
   item,
@@ -98,18 +99,16 @@ const SortableVariantItem = ({
   );
 };
 
-const ProductSelect = ({ data }) => {
+const ProductSelect = ({ data, index }) => {
   const {
     toggleModal,
     updateProductDiscount,
     updateVariantDiscount,
     updateVariant,
+    modalOpen,
   } = useGlobalStore((state) => state);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [items, setItems] = useState([]);
   const variants = data?.variants || [];
-  console.log(data);
-
   const sensors = useSensors(useSensor(PointerSensor, {}));
 
   const expandVariants = () => {
@@ -142,11 +141,28 @@ const ProductSelect = ({ data }) => {
     updateVariant(data.id, newArray);
   };
 
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({
+      id: data?.id,
+    });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <Container className="my-4">
+    <Container ref={setNodeRef} style={style} className="my-4">
       <Flex verticalCenter key={data.id} className="mt-4 mb-2 gap-4">
-        <img src={IconDD} width="7px" height="14px" alt="d&d icon" />
-        1.
+        <div
+          className="cursor-move"
+          data-nodename="drag-handle"
+          {...listeners}
+          {...attributes}
+        >
+          <img src={IconDD} width="7px" height="14px" alt="drag handle" />
+        </div>
+        {index + 1}.
         <Flex
           onClick={() => toggleModal()}
           verticalCenter
@@ -230,6 +246,7 @@ const ProductSelect = ({ data }) => {
           )}
         </Flex>
       ) : null}
+      <ProductModal id={data.id} isOpen={modalOpen} />
     </Container>
   );
 };

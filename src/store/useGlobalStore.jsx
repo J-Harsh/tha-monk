@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 import { discountTypes } from "../utils/constant";
 
 const emptyProduct = {
-  id: null,
+  id: Date.now(),
   title: null,
   variants: [],
   image: {},
@@ -84,6 +84,10 @@ const useGlobalStore = create(
             }
           );
           return { displayProducts: updatedDisplayProducts };
+        }),
+      updateProduct: (products) =>
+        set((state) => {
+          return { displayProducts: products };
         }),
       removeProduct: (productId) =>
         set((state) => {
