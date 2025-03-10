@@ -34,13 +34,14 @@ const Modal = ({ isOpen, children }) => {
 };
 
 const Title = ({ children }) => {
-  const { toggleModal } = useGlobalStore((state) => state);
+  const { toggleModal, setCurrentId } = useGlobalStore((state) => state);
   return (
     <Flex center className="justify-between p-4  border-tertiary">
       <Typography weight="semibold">{children}</Typography>
       <img
         onClick={() => {
           toggleModal();
+          setCurrentId(null);
         }}
         className="text-secondary cursor-pointer"
         src={IconClose}

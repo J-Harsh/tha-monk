@@ -15,8 +15,10 @@ const emptyProduct = {
 const useGlobalStore = create(
   persist(
     (set, get) => ({
+      currentId: null,
       displayProducts: [emptyProduct],
       modalOpen: false,
+      setCurrentId: (id) => set({ currentId: id }),
       toggleModal: () =>
         set((state) => ({ ...state, modalOpen: !state.modalOpen })),
       addDummyProduct: () => {

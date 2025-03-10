@@ -17,6 +17,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import ProductModal from "../molecules/ProductModal";
 
 const AddProducts = () => {
   const { displayProducts, addDummyProduct, modalOpen, updateProduct } =
@@ -81,6 +82,8 @@ const AddProducts = () => {
           </Container>
         </Container>
       </Flex>
+
+      <ProductModal isOpen={modalOpen} />
     </>
   );
 };

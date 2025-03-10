@@ -7,12 +7,17 @@ import Flex from "../atoms/Flex";
 import Typography from "../atoms/Typography";
 import usePaginatedSearchQuery from "../../hooks/usePaginatedSearchQuery";
 import useGlobalStore from "../../store/useGlobalStore";
+import Loader from "../atoms/Loader";
 
-const ProductModal = ({ id, isOpen }) => {
+const ProductModal = ({ isOpen }) => {
   const pageLimit = 10;
-  const { toggleModal, addToSelectedProducts, removeProduct } = useGlobalStore(
-    (state) => state
-  );
+  const {
+    toggleModal,
+    addToSelectedProducts,
+    removeProduct,
+    currentId,
+    setCurrentId,
+  } = useGlobalStore((state) => state);
 
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -36,28 +41,30 @@ const ProductModal = ({ id, isOpen }) => {
     hasNextPage,
     fetchNextPage,
   } = usePaginatedSearchQuery(
-    { limit: pageLimit, search: debouncedSearchTerm, throttleTime: 600 },
+    { limit: pageLimit, search: debouncedSearchTerm, throttleTime: 2000 },
     { enabled: isOpen }
   );
 
-  const productList = data?.pages?.flatMap((page) => page.products) || [];
+  const productList = data?.pages.flatMap((page) => page.products) || [];
 
   const handleSearch = (searchValue) => {
     debouncedSetSearch(searchValue);
   };
 
   const handleAdd = () => {
-    removeProduct(id);
+    removeProduct(currentId);
     addToSelectedProducts(selectedProducts);
     setSelectedProducts([]);
     setDebouncedSearchTerm("");
     toggleModal();
+    setCurrentId(null);
   };
 
   const handleCancel = () => {
     setSelectedProducts([]);
     setDebouncedSearchTerm("");
     toggleModal();
+    setCurrentId(null);
   };
 
   useEffect(() => {
@@ -96,21 +103,7 @@ const ProductModal = ({ id, isOpen }) => {
       <Modal.Body>
         <Container className="divide-y divide-secondary">
           {isLoading && !isFetchingNextPage ? (
-            <Flex center className="py-4">
-              <Typography className="text-gray-500">
-                Built a custom api to host it on render , might take some time.
-              </Typography>
-              <br />
-              <center>
-                <a
-                  href="https://github.com/J-Harsh/tha-monk-sample-be"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Link to backend
-                </a>
-              </center>
-            </Flex>
+            <Loader />
           ) : isError ? (
             <Flex center className="py-4">
               <Typography className="text-red-500">
@@ -119,21 +112,19 @@ const ProductModal = ({ id, isOpen }) => {
             </Flex>
           ) : productList.length > 0 ? (
             <>
-              {productList.map((product) => (
-                <ProductSection
-                  key={product.id}
-                  data={product}
-                  selectedProducts={selectedProducts}
-                  setSelectedProducts={setSelectedProducts}
-                />
-              ))}
+              {productList.map((product) => {
+                return (
+                  <ProductSection
+                    key={product.id}
+                    data={product}
+                    selectedProducts={selectedProducts}
+                    setSelectedProducts={setSelectedProducts}
+                  />
+                );
+              })}
               <Container ref={loadMoreRef} className="py-4">
                 {isFetchingNextPage ? (
-                  <Flex center>
-                    <Typography className="text-secondary">
-                      Loading more products...
-                    </Typography>
-                  </Flex>
+                  <Loader />
                 ) : hasNextPage ? (
                   <Container className="h-20 w-full" />
                 ) : productList.length > 0 ? (
@@ -257,13 +248,15 @@ const ProductSection = ({ data, selectedProducts, setSelectedProducts }) => {
           className="scale-180 ml-4 cursor-pointer accent-primary"
           type="checkbox"
         />
-        <img
-          src={data.image.src}
-          alt="product"
-          className="rounded-md size-12"
-        />
+        {data?.image?.src && (
+          <img
+            src={data.image.src}
+            alt="product"
+            className="rounded-md size-12"
+          />
+        )}
         <Typography size="base" weight="normal">
-          {data.title}
+          {data?.title}
         </Typography>
       </Flex>
       <Container>

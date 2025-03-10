@@ -104,7 +104,7 @@ const ProductSelect = ({ data, index }) => {
     updateProductDiscount,
     updateVariantDiscount,
     updateVariant,
-    modalOpen,
+    setCurrentId,
   } = useGlobalStore((state) => state);
   const [isExpanded, setIsExpanded] = useState(false);
   const variantList = data?.variants || [];
@@ -163,7 +163,10 @@ const ProductSelect = ({ data, index }) => {
         </Container>
         {index + 1}.
         <Flex
-          onClick={() => toggleModal()}
+          onClick={() => {
+            toggleModal();
+            setCurrentId(data?.id);
+          }}
           verticalCenter
           className="justify-between bg-white px-2 shadow-md w-[215px] h-8 cursor-pointer"
         >
@@ -245,7 +248,6 @@ const ProductSelect = ({ data, index }) => {
           )}
         </Flex>
       ) : null}
-      <ProductModal id={data.id} isOpen={modalOpen} />
     </Container>
   );
 };

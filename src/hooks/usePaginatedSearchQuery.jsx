@@ -31,13 +31,18 @@ function throttle(fn, delay) {
 }
 
 function usePaginatedSearchQuery(
-  { limit, search, throttleTime = 500 },
+  { limit, search, throttleTime = 2000 },
   options = {}
 ) {
   const throttledFetch = useCallback(
     throttle(async (url) => {
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          mode: "cors",
+          headers: {
+            "x-api-key": "72njgfa948d9aS7gs5",
+          },
+        });
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
@@ -53,21 +58,29 @@ function usePaginatedSearchQuery(
   return useInfiniteQuery({
     queryKey: ["products", { limit, search }],
     queryFn: async ({ pageParam = 1 }) => {
-      const baseUrl = "https://tha-monk-sample-be.onrender.com/products";
+      const baseUrl = "https://stageapi.monkcommerce.app/task/products/search";
       const params = new URLSearchParams();
-
       params.append("page", String(pageParam));
       params.append("limit", String(limit));
       if (search) {
         params.append("search", search);
       }
-
       const url = `${baseUrl}?${params.toString()}`;
-      return await throttledFetch(url);
+      const data = await throttledFetch(url);
+
+      return {
+        products: data,
+        currentPage: pageParam,
+      };
     },
     getNextPageParam: (lastPage) => {
-      const { page, pages } = lastPage.pagination;
-      return page < pages ? page + 1 : undefined;
+      const hasData =
+        Array.isArray(lastPage.products) && lastPage.products.length > 0;
+
+      if (!hasData || lastPage.products.length < limit) {
+        return undefined;
+      }
+      return lastPage.currentPage + 1;
     },
     keepPreviousData: true,
     ...options,
