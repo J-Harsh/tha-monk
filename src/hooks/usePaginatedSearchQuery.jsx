@@ -40,7 +40,7 @@ function usePaginatedSearchQuery(
         const response = await fetch(url, {
           mode: "cors",
           headers: {
-            "x-api-key": "72njgfa948d9aS7gs5",
+            "x-api-key": import.meta.env.VITE_API_KEY,
           },
         });
         if (!response.ok) {
